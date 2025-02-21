@@ -1,19 +1,23 @@
 <template>
   <el-container class="all">
-    <el-aside>
-      <uiAside @setting="methods.setting" @getChat="methods.getChat"></uiAside>
+    <el-aside :width="data.isHide ? '60px' : '240px'">
+      <uiAside
+        @setting="methods.setting"
+        @getChat="methods.getChat"
+        @changeHide="methods.changeHide"
+      ></uiAside>
     </el-aside>
     <el-container>
       <el-header>
         <div
           v-show="!data.titleEdit"
-          style="max-width: 100px; overflow: hidden; margin-right: 10px"
+          style="max-width: 200px; overflow: hidden; margin-right: 10px"
         >
           {{ data.chatTitle }}
         </div>
         <el-input
           v-show="data.titleEdit"
-          style="max-width: 100px; margin-right: 10px"
+          style="max-width: 200px; margin-right: 10px"
           v-model="data.chatTitle"
           @blur="methods.confirm"
         ></el-input>
@@ -30,7 +34,9 @@
       </el-header>
       <el-container>
         <el-main>Main</el-main>
-        <el-footer>Footer</el-footer>
+        <el-footer>
+          <inputBox></inputBox>
+        </el-footer>
       </el-container>
     </el-container>
   </el-container>
@@ -41,6 +47,7 @@ import { reactive } from "vue";
 import { RouterLink, RouterView } from "vue-router";
 import uiAside from "./components/aside.vue";
 import apiDialog from "./components/apiDialog.vue";
+import inputBox from "./components/inputBox.vue";
 
 const emit = defineEmits(["setChatTitle"]);
 
@@ -49,6 +56,7 @@ interface Data {
   chat: ChatMessage;
   chatTitle: string;
   titleEdit: boolean;
+  isHide: boolean;
 }
 interface ChatMessage {
   fldGuid: string;
@@ -56,6 +64,7 @@ interface ChatMessage {
 }
 
 const data = reactive<Data>({
+  isHide: false,
   apiDialog: false,
   chat: {
     fldName: "",
@@ -77,10 +86,17 @@ const methods = {
     data.titleEdit = true;
   },
   confirm() {
+    data.titleEdit = false;
+    if ((data.chatTitle ?? "") === "") {
+      data.chatTitle = "新对话";
+    }
     emit("setChatTitle", {
       fldGuid: data.chat.fldGuid,
       fldName: data.chatTitle,
     });
+  },
+  changeHide(isHide: boolean) {
+    data.isHide = isHide;
   },
 };
 </script>
@@ -92,7 +108,6 @@ const methods = {
   border-bottom: 1px solid #dcdfe6;
 }
 .el-aside {
-  width: 240px;
   border-right: 1px solid #dcdfe6;
 }
 .all,
@@ -102,6 +117,7 @@ const methods = {
 }
 .el-footer {
   border-top: 1px solid #dcdfe6;
-  height: 120px;
+  height: 200px;
+  padding: 0;
 }
 </style>
