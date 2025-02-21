@@ -61,6 +61,11 @@ const emit = defineEmits(["setting", "getChat", "changeHide"]);
 interface ChatMessage {
   fldGuid: string;
   fldName: string;
+  messageList: MessageList[];
+}
+interface MessageList {
+  content: string;
+  person: string;
 }
 interface Data {
   chatList: ChatMessage[];
@@ -76,6 +81,7 @@ const methods = {
     data.chatList.push({
       fldGuid: methods.newGuid(),
       fldName: "新对话",
+      messageList: [],
     });
   },
   newGuid() {

@@ -6,6 +6,7 @@
       placeholder="给deepseek发送信息"
       :rows="6"
       resize="none"
+      @keyup.enter="methods.handleEnter"
     ></el-input>
     <div class="other-box">
       <div>
@@ -44,7 +45,12 @@
             <el-icon :size="20"><Paperclip /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-button type="primary" circle :disabled="data.content === ''">
+        <el-button
+          type="primary"
+          circle
+          :disabled="data.content === ''"
+          @click="methods.send"
+        >
           <el-icon :size="20"><Top /></el-icon>
         </el-button>
       </div>
@@ -53,6 +59,7 @@
 </template>
 <script lang="ts" setup>
 import { reactive } from "vue";
+const emit = defineEmits(["send"]);
 interface Data {
   [key: string]: string | boolean;
   // content: string;
@@ -68,6 +75,15 @@ const data = reactive<Data>({
 const methods = {
   changeStatus(prop: string) {
     data[prop] = !data[prop];
+  },
+  send() {
+    emit("send", data.content);
+    data.content = "";
+  },
+  handleEnter() {
+    if (data.content !== "") {
+      methods.send();
+    }
   },
 };
 </script>

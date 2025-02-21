@@ -33,9 +33,11 @@
         </span>
       </el-header>
       <el-container>
-        <el-main>Main</el-main>
+        <el-main>
+          <chatBox :messageList="data.chat.messageList"></chatBox>
+        </el-main>
         <el-footer>
-          <inputBox></inputBox>
+          <inputBox @send="methods.send"></inputBox>
         </el-footer>
       </el-container>
     </el-container>
@@ -44,10 +46,10 @@
 </template>
 <script setup lang="ts">
 import { reactive } from "vue";
-import { RouterLink, RouterView } from "vue-router";
 import uiAside from "./components/aside.vue";
 import apiDialog from "./components/apiDialog.vue";
 import inputBox from "./components/inputBox.vue";
+import chatBox from "./components/chatBox.vue";
 
 const emit = defineEmits(["setChatTitle"]);
 
@@ -58,9 +60,14 @@ interface Data {
   titleEdit: boolean;
   isHide: boolean;
 }
+interface MessageList {
+  content: string;
+  person: string;
+}
 interface ChatMessage {
   fldGuid: string;
   fldName: string;
+  messageList: MessageList[];
 }
 
 const data = reactive<Data>({
@@ -69,6 +76,7 @@ const data = reactive<Data>({
   chat: {
     fldName: "",
     fldGuid: "",
+    messageList: [],
   },
   chatTitle: "",
   titleEdit: false,
@@ -97,6 +105,12 @@ const methods = {
   },
   changeHide(isHide: boolean) {
     data.isHide = isHide;
+  },
+  send(content: string) {
+    data.chat.messageList.push({
+      content,
+      person: "customer",
+    });
   },
 };
 </script>
