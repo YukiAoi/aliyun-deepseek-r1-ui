@@ -1,7 +1,7 @@
 import CryptoJS from 'crypto-js';
 
 // 定义密钥和偏移量
-const key = CryptoJS.enc.Utf8.parse('morgan');
+const key = CryptoJS.enc.Utf8.parse('wsWcvZhevZ2QzkL+f3x8dw==');
 const iv = CryptoJS.enc.Utf8.parse('altoria');
 
 // AES 加密函数
