@@ -120,10 +120,7 @@ const methods = {
       type: "warning",
     }).then(() => {
       data.chatList = [];
-      ElMessage({
-        type: "success",
-        message: "删除成功",
-      });
+      ElMessage.success("删除成功");
     });
   },
 };

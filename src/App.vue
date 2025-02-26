@@ -42,19 +42,20 @@
       </el-container>
     </el-container>
   </el-container>
-  <apiDialog :apiDialog="data.apiDialog"></apiDialog>
+  <apiDialogVue v-model:apiDialog="apiDialog"></apiDialogVue>
 </template>
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, getCurrentInstance, ref } from "vue";
+import { ElMessage } from "element-plus";
 import uiAside from "./components/aside.vue";
-import apiDialog from "./components/apiDialog.vue";
+import apiDialogVue from "./components/apiDialog.vue";
 import inputBox from "./components/inputBox.vue";
 import chatBox from "./components/chatBox.vue";
 
 const emit = defineEmits(["setChatTitle"]);
+const { proxy }: any = getCurrentInstance();
 
 interface Data {
-  apiDialog: boolean;
   chat: ChatMessage;
   chatTitle: string;
   titleEdit: boolean;
@@ -70,9 +71,10 @@ interface ChatMessage {
   messageList: MessageList[];
 }
 
+let apiDialog = ref<boolean>(false);
+
 const data = reactive<Data>({
   isHide: false,
-  apiDialog: false,
   chat: {
     fldName: "",
     fldGuid: "",
@@ -84,7 +86,7 @@ const data = reactive<Data>({
 
 const methods = {
   setting() {
-    data.apiDialog = true;
+    apiDialog.value = true;
   },
   getChat(chat: ChatMessage) {
     data.chatTitle = chat.fldName;
@@ -111,6 +113,20 @@ const methods = {
       content,
       person: "customer",
     });
+    proxy
+      .$getChatCompletion([
+        {
+          content,
+          role: "user",
+        },
+      ])
+      .then((res: any) => {
+        console.log(res, "res");
+      })
+      .catch((err: any) => {
+        ElMessage.error(err);
+        console.log(err, "err");
+      });
   },
 };
 </script>

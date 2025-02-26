@@ -94,10 +94,10 @@ const methods = {
   align-items: center;
   justify-content: space-between;
 }
-::v-deep .el-textarea__inner {
+:deep(.el-textarea__inner) {
   box-shadow: none;
 }
-::v-deep .el-radio-button__inner {
+:deep(.el-radio-button__inner) {
   border-left: var(--el-border) !important;
   border-radius: var(--el-border-radius-base) !important;
 }

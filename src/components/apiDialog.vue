@@ -1,16 +1,6 @@
 <template>
-  <el-dialog
-    v-model="props.apiDialog"
-    title="请输入apiKey"
-    width="500"
-    top="35vh"
-  >
-    <el-form
-      ref="refRuleForm"
-      :model="data.ruleForm"
-      :rules="data.rules"
-      class="demo-ruleForm"
-    >
+  <el-dialog v-model="apiDialog" title="请输入apiKey" width="500" top="35vh">
+    <el-form ref="refRuleForm" :model="data.ruleForm" :rules="data.rules">
       <el-form-item label="apiKey" prop="apiKey">
         <el-input
           label-suffix="："
@@ -37,20 +27,20 @@
 import { ref, reactive, watch } from "vue";
 import { encrypt, decrypt } from "@/utils/crypto";
 import type { FormInstance, FormRules } from "element-plus";
+import { ElMessage } from "element-plus";
 const refRuleForm = ref<FormInstance>();
-const props = defineProps<{
-  apiDialog: boolean;
-}>();
+let apiDialog = defineModel("apiDialog", {
+  type: Boolean,
+  default: false,
+});
 interface ruleForm {
   apiKey: string;
 }
 interface Data {
-  apiDialog: boolean;
   ruleForm: ruleForm;
   rules: FormRules<ruleForm>;
 }
 const data = reactive<Data>({
-  apiDialog: false,
   ruleForm: {
     apiKey: "",
   },
@@ -59,11 +49,15 @@ const data = reactive<Data>({
   },
 });
 watch(
-  () => props.apiDialog,
+  () => apiDialog.value,
   (val) => {
     if (val) {
       let apiKey = localStorage.getItem("apiKey");
-      data.ruleForm.apiKey = apiKey !== null ? decrypt(apiKey) : "";
+      if (apiKey !== null && apiKey !== "") {
+        data.ruleForm.apiKey = decrypt(apiKey);
+      } else {
+        data.ruleForm.apiKey = "";
+      }
     }
   }
 );
@@ -73,6 +67,7 @@ const methods = {
       return;
     }
     refRuleForm.resetFields();
+    apiDialog.value = false;
   },
   confirm(refRuleForm: FormInstance | undefined) {
     if (!refRuleForm) {
@@ -81,6 +76,8 @@ const methods = {
     refRuleForm.validate((valid) => {
       if (valid) {
         localStorage.setItem("apiKey", encrypt(data.ruleForm.apiKey));
+        ElMessage.success("修改apiKey成功");
+        methods.cancel(refRuleForm);
       }
     });
   },
