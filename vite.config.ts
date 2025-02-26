@@ -17,4 +17,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    // 配置跨域
+    proxy: {
+      '/sse': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+    }
+  }
 })
