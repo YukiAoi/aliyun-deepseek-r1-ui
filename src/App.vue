@@ -5,6 +5,7 @@
         @setting="methods.setting"
         @getChat="methods.getChat"
         @changeHide="methods.changeHide"
+        ref="asideRef"
       ></uiAside>
     </el-aside>
     <el-container>
@@ -42,28 +43,36 @@
       </el-container>
     </el-container>
   </el-container>
-  <apiDialogVue v-model:apiDialog="apiDialog"></apiDialogVue>
+  <apiDialogVue
+    v-model:apiDialog="apiDialog"
+    @getApiKey="methods.getApiKey"
+  ></apiDialogVue>
 </template>
 <script setup lang="ts">
-import { reactive, getCurrentInstance, ref } from "vue";
 import { ElMessage } from "element-plus";
+import { reactive, getCurrentInstance, ref, onMounted } from "vue";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { decrypt } from "@/utils/crypto";
 import uiAside from "./components/aside.vue";
 import apiDialogVue from "./components/apiDialog.vue";
 import inputBox from "./components/inputBox.vue";
 import chatBox from "./components/chatBox.vue";
 
 const emit = defineEmits(["setChatTitle"]);
-const { proxy }: any = getCurrentInstance();
+const asideRef = ref<any>();
 
 interface Data {
   chat: ChatMessage;
   chatTitle: string;
   titleEdit: boolean;
   isHide: boolean;
+  apiKey: string;
 }
 interface MessageList {
   content: string;
+  think: string;
   person: string;
+  answer: string;
 }
 interface ChatMessage {
   fldGuid: string;
@@ -82,8 +91,22 @@ const data = reactive<Data>({
   },
   chatTitle: "",
   titleEdit: false,
+  apiKey: "",
 });
-
+onMounted(() => {
+  let apiKey = localStorage.getItem("apiKey");
+  if (apiKey !== null && apiKey !== "") {
+    data.apiKey = decrypt(apiKey);
+  } else {
+    data.apiKey = "";
+  }
+  console.log(data.apiKey, "apiKey");
+  console.log(
+    JSON.parse(
+      `{"choices":[{"delta":{"content":"。","reasoning_content":null},"finish_reason":null,"index":0,"logprobs":null}],"object":"chat.completion.chunk","usage":null,"created":1740638113,"system_fingerprint":null,"model":"deepseek-r1","id":"chatcmpl-663ae37c-6afa-9e1e-b7b4-0a1a5ff26edd"}`
+    )
+  );
+});
 const methods = {
   setting() {
     apiDialog.value = true;
@@ -108,25 +131,66 @@ const methods = {
   changeHide(isHide: boolean) {
     data.isHide = isHide;
   },
-  send(content: string) {
+  getApiKey(apiKey: string) {
+    data.apiKey = apiKey;
+  },
+  async send(content: string) {
     data.chat.messageList.push({
       content,
       person: "customer",
+      think: "",
+      answer: "",
     });
-    proxy
-      .$getChatCompletion([
-        {
-          content,
-          role: "user",
+    const index = data.chat.messageList.length - 1;
+    await fetchEventSource(
+      "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.apiKey}`,
         },
-      ])
-      .then((res: any) => {
-        console.log(res, "res");
-      })
-      .catch((err: any) => {
-        ElMessage.error(err);
-        console.log(err, "err");
-      });
+        body: JSON.stringify({
+          model: "deepseek-r1",
+          messages: [
+            {
+              content,
+              role: "user",
+            },
+          ],
+          stream: true,
+        }),
+        onmessage(event) {
+          console.log("接收到事件:", event.data, typeof event.data);
+          if (event.data !== "[DONE]" && (event.data ?? "") !== "") {
+            let eventData = JSON.parse(event.data);
+            if (eventData?.choices && eventData?.choices.length > 0) {
+              if (eventData.choices[0].finish_reason !== "stop") {
+                if ((eventData.choices[0].content ?? "") !== "") {
+                  data.chat.messageList[index].answer +=
+                    eventData.choices[0].content;
+                }
+                if ((eventData?.choices[0].reasoning_content ?? "") !== "") {
+                  data.chat.messageList[index].think +=
+                    eventData.reasoning_content[0].content;
+                }
+              }
+            }
+            if (eventData.id !== data.chat.fldGuid) {
+              data.chat.fldGuid = eventData.id;
+            }
+          }
+          if (event.data === "[DONE]") {
+            asideRef.value.methods.setInLocal();
+          }
+        },
+        onerror(error) {
+          ElMessage.error(error.toString());
+          throw error;
+        },
+        onclose() {},
+      }
+    );
   },
 };
 </script>

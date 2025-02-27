@@ -40,6 +40,7 @@ interface Data {
   ruleForm: ruleForm;
   rules: FormRules<ruleForm>;
 }
+const emit = defineEmits(["getApiKey"]);
 const data = reactive<Data>({
   ruleForm: {
     apiKey: "",
@@ -68,6 +69,7 @@ const methods = {
     }
     refRuleForm.resetFields();
     apiDialog.value = false;
+    emit("getApiKey", data.ruleForm.apiKey);
   },
   confirm(refRuleForm: FormInstance | undefined) {
     if (!refRuleForm) {

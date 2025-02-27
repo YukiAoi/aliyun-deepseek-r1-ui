@@ -83,6 +83,10 @@ const methods = {
       fldName: "新对话",
       messageList: [],
     });
+    methods.setInLocal();
+  },
+  setInLocal() {
+    localStorage.setItem("chatList", JSON.stringify(data.chatList));
   },
   newGuid() {
     const S4 = () => {
@@ -125,11 +129,16 @@ const methods = {
   },
 };
 onMounted(() => {
+  let chatList = localStorage.getItem("chatList");
+  if (chatList !== null && chatList !== "") {
+    data.chatList = JSON.parse(chatList);
+  }
   if (data.chatList.length <= 0) {
     methods.addChat();
     methods.getChat(data.chatList[0]);
   }
 });
+defineExpose({ methods });
 </script>
 
 <style scoped lang="scss">
